@@ -2,7 +2,7 @@ name: Bump version
 on:
   push:
     branches:
-      - release/* # Deploys when release branch is created
+      - master # Deploys when release branch is created
 jobs:
   build:
     runs-on: ubuntu-latest
