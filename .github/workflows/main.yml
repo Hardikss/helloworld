@@ -6,11 +6,22 @@ on:
       - master
 
 jobs:
-  deployment:
+  DEV:
     runs-on: ubuntu-latest
-    environment: 
-      name: production
-      url: https://github.com
+    environment: DEV
     steps:
-      - name: deploy
-        # ...deployment-specific steps
+      - uses: actions/checkout@v2
+
+      - name: Run a script
+        run: |
+          echo"i'm running a dev slot
+  
+  QA:
+    runs-on: ubuntu-latest
+    environment: QA
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run a script
+        run: |
+          echo"i'm running a qa slot
