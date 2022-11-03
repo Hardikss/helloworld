@@ -1,27 +1,32 @@
-name: Deployment 
+name: build and release only run with release branch app Service And tag create
 
 on:
   push:
-    branches:
+    branches:         
       - master
 
+  workflow_dispatch:
+
+
 jobs:
-  DEV:
-    runs-on: ubuntu-latest
-    environment: DEV
-    steps:
-      - uses: actions/checkout@v2
+   release-project:
+       name: Node-app relese
+       runs-on: ubuntu-latest
+       steps: 
+       
+       - uses: actions/checkout@v2
 
-      - name: Run a script
-        run: |
-          echo"i'm running a dev slot
-  
-  QA:
-    runs-on: ubuntu-latest
-    environment: QA
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Run a script
-        run: |
-          echo"i'm running a qa slot
+       - name: Tag
+         id: tag_version
+         uses: gdo-dentsu-creative-web/github-tag-action@v6.0
+         with:
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           release_branches: release*
+       
+       - name: Create a GitHub release
+         id: release
+         uses: gdo-dentsu-creative-web/release-action@v1
+         with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          release: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
