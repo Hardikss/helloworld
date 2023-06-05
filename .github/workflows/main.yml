@@ -31,14 +31,14 @@ jobs:
 
        - name: Tag
          id: tag_version
-         uses: gdo-dentsu-creative-web/github-tag-action@v6.0
+         uses: anothrNick/github-tag-action@v6.0
          with:
            github_token: ${{ secrets.GITHUB_TOKEN }}
            release_branches: master*
        
        - name: Create a GitHub release
          id: master
-         uses: gdo-dentsu-creative-web/release-action@v1
+         uses: ncipollo/release-action@v1
          with:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           release: Release ${{ steps.tag_version.outputs.new_tag }}
