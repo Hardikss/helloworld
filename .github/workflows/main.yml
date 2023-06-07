@@ -3,38 +3,15 @@ on:
   push:
     branches:
       - master
-
-
-# jobs:
-#   tag:
-#     name: Move major tag
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v3
-#       - uses: phwt/major-tagging-action@v1
-
-# - name: Create Release
-#   id: release
-#   uses: halvardssm/github-action-tag-release@v1
-#   with:
-#     token: ${{ secrets.GITHUB_TOKEN }}
-#     path: "./package.json" # optional, will use ./package.json by default
-# - run: |
-#     echo 'Release created: ${{steps.version.outputs.release_created}}' # 'true' or 'false'
-#     echo 'Release exists: ${{steps.version.outputs.release_exists}}' # 'true' or 'false'
-#     echo 'Release tag: ${{steps.version.outputs.release_tag}}' # The tag from package.json
-# - if: ${{steps.release.outputs.release_exists == 'true'}}
-#   run: |
-  
-  
-  jobs:
+jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: halvardssm/github-action-tag-release@v1
+      - name: tag-release
+      - uses: actions/checkout@v2
       - name: Bump version and push tag
-        id: release
-        uses: halvardssm/github-action-tag-release@v1
+        id: tag_version
+        uses: halvardssm/github-action-tag-release@1.0.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create a GitHub release
@@ -43,3 +20,5 @@ on:
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           body: ${{ steps.tag_version.outputs.changelog }}
+          
+          
