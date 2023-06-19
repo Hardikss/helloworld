@@ -15,35 +15,23 @@ jobs:
        - name: Checkout repository
          uses: actions/checkout@v2
 
-#        - name: Tag
-#          id: tag_version
-#          uses: mathieudutour/github-tag-action@v6.0
-#          with:
-#            github_token: ${{ secrets.GH_TOKEN }}
-#            release_branches: master*
+       - name: Tag
+         id: tag_version
+         uses: mathieudutour/github-tag-action@v6.0
+         with:
+           github_token: ${{ secrets.GH_TOKEN }}
+           release_branches: master*
        
-#        - name: Create GitHub Release
-#          id: create_release
-#          uses: actions/create-release@v1
-#          env:
-#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          with:
-#            tag: v1.0.0
-#            release: Release v1.0.0
-#            body: Add release notes here
-  
        - name: Create GitHub Release
          id: create_release
          uses: actions/create-release@v1
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          with:
-           tag_name: v1.0.0
-           body: |
-            Add release notes here
-           draft: false
-           prerelease: false
-           
+           tag: ${{ steps.tag_version.outputs.tag_version }}
+           release: Release ${{ steps.tag_version.outputs.tag_version }}
+           body: ${{ steps.tag_version.outputs.changelog }}
+
        
        
        - name: Download artifact from build job
