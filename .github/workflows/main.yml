@@ -28,8 +28,10 @@ jobs:
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          with:
-           version: ${{ steps.step_version.outputs.version }}
-           upload_url: ${{ steps.step_upload_url.outputs.upload_url }}
+           tag: ${{ steps.tag_version.outputs.new_tag }}
+#            release: Release ${{ steps.tag_version.outputs.new_tag }}
+#            body: ${{ steps.tag_version.outputs.changelog }}
+ 
 
        
        
