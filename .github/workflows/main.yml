@@ -21,25 +21,25 @@ jobs:
       - name: Get previous tag
         id: get_previous_tag
         run: |
-          git checkout $(Build.SourceBranchName)
           git fetch --tags
-          VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
-          oldVer=$VERSION
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0)
           echo "::set-output name=tag::$PREVIOUS_TAG"
 
       - name: Increment tag
         id: increment_tag
         run: |
-          PVERSION_BITS=(${VERSION//./ })
-          #get number parts and increase last one by 1
-          NUM1=${VERSION_BITS[0]} # for Major number increse
-          NUM2=${VERSION_BITS[1]} # Minor Number increse
-          NUM3=${VERSION_BITS[2]} #Patch number increse
+          PREVIOUS_TAG=${{ steps.get_previous_tag.outputs.tag }}
+          IFS='.' read -r -a VERSION <<< "$PREVIOUS_TAG"
+          NUM1=${VERSION[0]}
+          NUM2=${VERSION[1]}
+          NUM3=${VERSION[2]}
           NUM3=$((NUM3+1))
+          NEW_TAG="$NUM1.$NUM2.$((NUM3 + 1))"
+          echo "::set-output name=tag::$NEW_TAG"
 
       - name: Create tag
         id: create_tag
         run: |
-          TNEW_TAG="$NUM1.$NUM2.$NUM3"
-          echo "Updating $VERSION to $NEW_TAG"
-          newVer=$NEW_TAG
+          TAG=${{ steps.increment_tag.outputs.tag }}
+          git tag $TAG
+          git push origin $TAG
