@@ -1,4 +1,4 @@
-name: Auto Increment Tag
+name: Tag and Release
 
 on:
   push:
@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up Git
+        run: |
+          git config user.name "Your Name"
+          git config user.email "your.email@example.com"
 
       - name: Get current tag (if available)
         id: get_tag
@@ -34,23 +39,21 @@ jobs:
           fi
           echo "::set-output name=tag::$NEXT_TAG"
 
-      - name: Check if tag already exists
-        id: tag_exists
-        run: |
-          TAG=${{ steps.increment_tag.outputs.tag }}
-          git fetch --tags
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            echo "::set-output name=exists::true"
-          else
-            echo "::set-output name=exists::false"
-          fi
-
-      - name: Create tag
+      - name: Create and push tag
         id: create_tag
         run: |
-          EXISTS=${{ steps.tag_exists.outputs.exists }}
-          if [[ "$EXISTS" == "false" ]]; then
-            NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
-            git tag $NEXT_TAG
-            git push origin $NEXT_TAG
-          fi
+          NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
+          git tag $NEXT_TAG
+          git push origin $NEXT_TAG
+
+      - name: Create GitHub release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.create_tag.outputs.tag }}
+          release_name: Release ${{ steps.create_tag.outputs.tag }}
+          body: |
+            Add release notes here
+          draft: false
+          prerelease: false
