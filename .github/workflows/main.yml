@@ -37,9 +37,9 @@ jobs:
       - name: Delete existing tag (if available)
         if: steps.get_tag.outputs.tag != ''
         run: |
-          EXISTING_TAG=${{ steps.get_tag.outputs.tag }}
-          git push --delete origin $EXISTING_TAG
-          git tag --delete $EXISTING_TAG
+          CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
+          git push --delete origin $CURRENT_TAG
+          git tag --delete $CURRENT_TAG
 
       - name: Create tag
         id: create_tag
