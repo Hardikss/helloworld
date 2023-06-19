@@ -41,3 +41,4 @@ jobs:
           git tag $NEXT_TAG
           git push origin $NEXT_TAG
           
+      
