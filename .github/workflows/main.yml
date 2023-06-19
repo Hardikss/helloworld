@@ -13,34 +13,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-#       - name: Set up Git
-#         run: |
-#           git config --local user.email "hardik.sharma@successive.tech"
-#           git config --local user.name "@Hardikss"
-
-
-      - name: Get current tag
-        id: get_tag
+      - name: Set up Git
         run: |
-          TAG=$(git describe --abbrev=0 --tags)
-          echo "::set-output name=tag::$TAG"
-
-      - name: Determine next tag
-        id: increment_tag
-        run: |
-          CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
-          IFS='.' read -r -a VERSION <<< "$CURRENT_TAG"
-          MAJOR=${VERSION[0]}
-          MINOR=${VERSION[1]}
-          PATCH=${VERSION[2]}
-          NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
-          echo "::set-output name=tag::$NEXT_TAG"
+          git config --local user.email "hardik.sharma@successive.tech"
+          git config --local user.name "@Hardikss"
 
       - name: Create tag
         id: create_tag
         run: |
-          NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
-          git tag $NEXT_TAG
-          git push origin $NEXT_TAG
+          git tag -a v1.0.0 -m "Version 1.0.0"
+          git push origin --tags
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.create_tag.outputs.stdout }}
+          release_name: Release ${{ steps.create_tag.outputs.stdout }}
+          body: |
+            Add release notes here.
+
+
 
 
