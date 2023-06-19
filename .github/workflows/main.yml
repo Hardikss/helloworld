@@ -27,3 +27,4 @@ jobs:
         run: |
           git tag -a "$(echo ${{ steps.latest_tag.outputs.tag }} | awk -F. -v OFS=. '{$NF=$NF+1;} 1')" -m "Bump version"
           git push --follow-tags
+
