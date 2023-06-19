@@ -22,7 +22,7 @@ jobs:
         id: get_previous_tag
         run: |
           git fetch --tags
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0)
+          PREVIOUS_TAG=$(git describe --tags --abbrev=1)
           echo "::set-output name=tag::$PREVIOUS_TAG"
 
       - name: Increment tag
