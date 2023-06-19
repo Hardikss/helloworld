@@ -34,6 +34,13 @@ jobs:
           fi
           echo "::set-output name=tag::$NEXT_TAG"
 
+      - name: Delete existing tag (if available)
+        if: steps.get_tag.outputs.tag != ''
+        run: |
+          EXISTING_TAG=${{ steps.get_tag.outputs.tag }}
+          git push --delete origin $EXISTING_TAG
+          git tag --delete $EXISTING_TAG
+
       - name: Create tag
         id: create_tag
         run: |
