@@ -13,16 +13,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Git
-        run: |
-          git config --local user.email "hardik.sharma@successive.tech"
-          git config --local user.name "@Hardikss"
+#       - name: Set up Git
+#         run: |
+#           git config --local user.email "hardik.sharma@successive.tech"
+#           git config --local user.name "@Hardikss"
 
+
+      - name: Get current tag
+        id: get_tag
+        run: |
+          TAG=$(git describe --abbrev=0 --tags)
+          echo "::set-output name=tag::$TAG"
 
       - name: Determine next tag
         id: increment_tag
         run: |
-          CURRENT_TAG=${{ env.CURRENT_TAG }}
+          CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
           IFS='.' read -r -a VERSION <<< "$CURRENT_TAG"
           MAJOR=${VERSION[0]}
           MINOR=${VERSION[1]}
@@ -36,10 +42,5 @@ jobs:
           NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
           git tag $NEXT_TAG
           git push origin $NEXT_TAG
-
-      - name: Set next tag as current tag for next build
-        run: |
-          NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
-          echo "CURRENT_TAG=$NEXT_TAG" >> $GITHUB_ENV
 
 
