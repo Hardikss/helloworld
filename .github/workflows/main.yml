@@ -5,24 +5,76 @@ on:
     branches:
       - master
 
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Bump version and push tag
-        id: tag_version
-        uses: mathieudutour/github-tag-action@v6.1
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+#   build:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Bump version and push tag
+#         id: tag_version
+#         uses: mathieudutour/github-tag-action@v6.1
+#         with:
+#           github_token: ${{ secrets.GITHUB_TOKEN }}
           
-      - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+#       - name: Create a GitHub release
+#         uses: ncipollo/release-action@v1
+#         with:
+#           tag: ${{ steps.tag_version.outputs.new_tag }}
+#           name: Release ${{ steps.tag_version.outputs.new_tag }}
+#           body: ${{ steps.tag_version.outputs.changelog }}
           
           
 
+    release-project:
+       name: Node-app relese
+       runs-on: ubuntu-latest
+       steps: 
+       
+       - uses: actions/checkout@v2
 
+       - name: Tag
+         id: tag_version
+         uses: mathieudutour/github-tag-action@v6.0
+         with:
+           github_token: ${{ secrets.GH_TOKEN }}
+           release_branches: Test-release*
+       
+       - name: Create GitHub Release
+         id: create_release
+         uses: actions/create-release@v1
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         with:
+           tag: ${{ steps.tag_version.outputs.new_tag }}
+           release: Release ${{ steps.tag_version.outputs.new_tag }}
+           body: ${{ steps.tag_version.outputs.changelog }}
+          
+
+       
+#        - name: Create Release
+#          id: create_release
+#          uses: actions/create-release@v1
+#          env:
+#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          with:
+#           tag: ${{ steps.tag_version.outputs.new_tag }}
+#           release: Release ${{ steps.tag_version.outputs.new_tag }}
+#           body: ${{ steps.tag_version.outputs.changelog }}
+  
+       - name: Download artifact from build job
+         uses: actions/download-artifact@v2
+         with:
+          name: node-app
+ 
+       - name: Upload Release Asset
+         id: upload-release-asset 
+         uses: actions/upload-release-asset@v1
+         env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+         with:
+           upload_url: ${{ steps.master.outputs.upload_url }} 
+           asset_path: ${{ github.workspace }}/release.zip
+           asset_name: ${{ steps.tag_version.outputs.new_tag }}.zip
+           asset_content_type: application/zip
