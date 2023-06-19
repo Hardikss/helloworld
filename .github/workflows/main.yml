@@ -1,4 +1,4 @@
-name: Custom Tagging
+name: Auto Increment Tag
 
 on:
   push:
@@ -13,32 +13,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Git
+      - name: Get current tag (if available)
+        id: get_tag
         run: |
-          git config --local user.email "hardik.sharma@successive.tech"
-          git config --local user.name "Hardikss"
+          TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
+          echo "::set-output name=tag::$TAG"
 
-      - name: Get previous tag
-        id: get_previous_tag
-        run: |
-          git fetch --tags
-          PREVIOUS_TAG=$(git describe --tags --abbrev=1)
-          echo "::set-output name=tag::$PREVIOUS_TAG"
-
-      - name: Increment tag
+      - name: Determine next tag
         id: increment_tag
         run: |
-          PREVIOUS_TAG=${{ steps.get_previous_tag.outputs.tag }}
-          IFS='.' read -r -a VERSION <<< "$PREVIOUS_TAG"
-          MAJOR=${VERSION[0]}
-          MINOR=${VERSION[1]}
-          PATCH=${VERSION[2]}
-          NEW_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
-          echo "::set-output name=tag::$NEW_TAG"
+          CURRENT_TAG=${{ steps.get_tag.outputs.tag }}
+          if [[ -z "$CURRENT_TAG" ]]; then
+            NEXT_TAG="v1.0.0"
+          else
+            IFS='.' read -r -a VERSION <<< "$CURRENT_TAG"
+            MAJOR=${VERSION[0]}
+            MINOR=${VERSION[1]}
+            PATCH=${VERSION[2]}
+            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+          echo "::set-output name=tag::$NEXT_TAG"
 
       - name: Create tag
         id: create_tag
         run: |
-          TAG=${{ steps.increment_tag.outputs.tag }}
-          git tag $TAG
-          git push origin $TAG
+          NEXT_TAG=${{ steps.increment_tag.outputs.tag }}
+          git tag $NEXT_TAG
+          git push origin $NEXT_TAG
