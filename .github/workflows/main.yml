@@ -1,4 +1,4 @@
-name: Create GitHub Release
+name: Auto Increment Tag
 
 on:
   push:
@@ -15,18 +15,33 @@ jobs:
 
       - name: Set up Git
         run: |
-          git config user.name "Your Name"
-          git config user.email "your.email@example.com"
+          git config user.name "Hardik Shrma"
+          git config user.email "hardik.sharma@successive.tech"
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v1.0.0
-          release_name: Release v1.0.0
-          body: |
-            Add release notes here
-          draft: false
-          prerelease: false
+      - name: Get latest tag (if available)
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
+          echo "::set-output name=latest_tag::$LATEST_TAG"
 
+      - name: Determine next tag
+        id: increment_tag
+        run: |
+          LATEST_TAG=${{ steps.get_latest_tag.outputs.latest_tag }}
+          if [[ -z "$LATEST_TAG" ]]; then
+            NEXT_TAG="v1.0.0"
+          else
+            IFS='.' read -r -a VERSION <<< "$LATEST_TAG"
+            MAJOR=${VERSION[0]}
+            MINOR=${VERSION[1]}
+            PATCH=${VERSION[2]}
+            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+          echo "::set-output name=next_tag::$NEXT_TAG"
+
+      - name: Create and push tag
+        id: create_tag
+        run: |
+          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
+          git tag $NEXT_TAG
+          git push origin $NEXT_TAG
