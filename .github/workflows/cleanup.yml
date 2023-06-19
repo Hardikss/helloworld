@@ -5,11 +5,11 @@ on:
       days:
         description: 'Number of days.'
         required: true
-        default: 10
+        default: 30
       minimum_runs:
         description: 'The minimum runs to keep for each workflow.'
         required: true
-        default: 10
+        default: 30
 
 jobs:
   del_runs:
@@ -20,5 +20,5 @@ jobs:
         with:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
-          retain_days: 10
-          keep_minimum_runs: 6
+          retain_days: 30
+          keep_minimum_runs: 2
