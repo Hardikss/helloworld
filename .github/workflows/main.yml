@@ -27,9 +27,9 @@ jobs:
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          with:
-           tag: ${{ steps.tag_version.outputs.new_tag }}
-           release: Release ${{ steps.tag_version.outputs.new_tag }}
-           body: ${{ steps.tag_version.outputs.changelog }}
+           tag: v1.0.0
+           release: Release v1.0.0
+           body: Add release notes here
   
        - name: Download artifact from build job
          uses: actions/download-artifact@v2
