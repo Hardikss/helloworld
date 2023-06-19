@@ -21,6 +21,7 @@ jobs:
       - name: Get previous tag
         id: get_previous_tag
         run: |
+          git checkout $(Build.SourceBranchName)
           git fetch --tags
           VERSION=$(git describe --tags `git rev-list --tags --max-count=1`)
           oldVer=$VERSION
