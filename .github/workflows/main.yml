@@ -28,9 +28,9 @@ jobs:
          env:
            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
          with:
-           tag: ${{ teps.master.outputs.upload_url }}
-#            release: Release ${{ steps.tag_version.outputs.new_tag }}
-#            body: ${{ steps.tag_version.outputs.changelog }}
+           tag: ${{ github.ref }}
+           release: Release ${{ github.ref }}
+           body: ${{ steps.tag_version.outputs.changelog }}
  
 
        
