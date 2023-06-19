@@ -18,13 +18,31 @@ jobs:
           git config --local user.email "hardik.sharma@successive.tech"
           git config --local user.name "@Hardikss"
 
-      - name: Get latest tag
-        id: latest_tag
-        run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
-
-      - name: Bump tag
-        id: bump_tag
+      - name: Get previous tag
+        id: get_previous_tag
         run: |
-          git tag -a "$(echo ${{ steps.latest_tag.outputs.tag }} | awk -F. -v OFS=. '{$NF=$NF+1;} 1')" -m "Bump version"
-          git push --follow-tags
+          git fetch --tags
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0)
+          echo "::set-output name=tag::$PREVIOUS_TAG"
+          git push origin $TAG
+ 
+
+      - name: Increment tag
+        id: increment_tag
+        run: |
+          PREVIOUS_TAG=${{ steps.get_previous_tag.outputs.tag }}
+          IFS='.' read -r -a VERSION <<< "$PREVIOUS_TAG"
+          MAJOR=${VERSION[0]}
+          MINOR=${VERSION[1]}
+          PATCH=${VERSION[2]}
+          NEW_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
+          echo "::set-output name=tag::$NEW_TAG"
+
+      - name: Create tag
+        id: create_tag
+        run: |
+          TAG=${{ steps.increment_tag.outputs.tag }}
+          git tag $TAG
+          git push origin $TAG
+
 
