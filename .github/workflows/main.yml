@@ -7,26 +7,6 @@ on:
 
 
 jobs:
-
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - name: Bump version and push tag
-#         id: tag_version
-#         uses: mathieudutour/github-tag-action@v6.1
-#         with:
-#           github_token: ${{ secrets.GITHUB_TOKEN }}
-          
-#       - name: Create a GitHub release
-#         uses: ncipollo/release-action@v1
-#         with:
-#           tag: ${{ steps.tag_version.outputs.new_tag }}
-#           name: Release ${{ steps.tag_version.outputs.new_tag }}
-#           body: ${{ steps.tag_version.outputs.changelog }}
-          
-          
-
     release-project:
        name: Node-app relese
        runs-on: ubuntu-latest
@@ -39,7 +19,7 @@ jobs:
          uses: mathieudutour/github-tag-action@v6.0
          with:
            github_token: ${{ secrets.GH_TOKEN }}
-           release_branches: Test-release*
+           release_branches: master*
        
        - name: Create GitHub Release
          id: create_release
@@ -50,18 +30,6 @@ jobs:
            tag: ${{ steps.tag_version.outputs.new_tag }}
            release: Release ${{ steps.tag_version.outputs.new_tag }}
            body: ${{ steps.tag_version.outputs.changelog }}
-          
-
-       
-#        - name: Create Release
-#          id: create_release
-#          uses: actions/create-release@v1
-#          env:
-#            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          with:
-#           tag: ${{ steps.tag_version.outputs.new_tag }}
-#           release: Release ${{ steps.tag_version.outputs.new_tag }}
-#           body: ${{ steps.tag_version.outputs.changelog }}
   
        - name: Download artifact from build job
          uses: actions/download-artifact@v2
