@@ -35,5 +35,4 @@ jobs:
           body: |
             Add release notes here.
 
-      - name: Display release URL
-        run: echo "Release created: ${{ steps.create_release.outputs.url }}"
+
