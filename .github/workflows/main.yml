@@ -1,4 +1,4 @@
-name: Determine Next Tag
+name: Auto Increment Tag
 
 on:
   push:
@@ -6,34 +6,42 @@ on:
       - master
 
 jobs:
-  determine_tag:
+  release:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get latest tag
+      - name: Set up Git
+        run: |
+          git config user.name "Your Name"
+          git config user.email "your.email@example.com"
+
+      - name: Get latest tag (if available)
         id: get_latest_tag
         run: |
-          git fetch --tags
-          latest_tag=$(git tag --sort=-version:refname | head -n 1)
-          echo "::set-output name=latest_tag::$latest_tag"
+          LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
+          echo "::set-output name=latest_tag::$LATEST_TAG"
 
-      - name: Extract tag version
-        id: extract_tag_version
+      - name: Determine next tag
+        id: increment_tag
         run: |
-          version=$(echo "${{ steps.get_latest_tag.outputs.latest_tag }}" | sed -E 's/^v([0-9.]+).*$/\1/')
-          echo "::set-output name=version::$version"
+          LATEST_TAG=${{ steps.get_latest_tag.outputs.latest_tag }}
+          if [[ -z "$LATEST_TAG" ]]; then
+            NEXT_TAG="v1.0.0"
+          else
+            IFS='.' read -r -a VERSION <<< "$LATEST_TAG"
+            MAJOR=${VERSION[0]}
+            MINOR=${VERSION[1]}
+            PATCH=${VERSION[2]}
+            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+          echo "::set-output name=next_tag::$NEXT_TAG"
 
-      - name: Increment tag version
-        id: increment_tag_version
+      - name: Create and push tag
+        id: create_tag
         run: |
-          version="${{ steps.extract_tag_version.outputs.version }}"
-          next_version=$(echo "$version + 0.1" | bc)
-          echo "::set-output name=next_version::$next_version"
-
-      - name: Use next tag
-        run: |
-          next_tag="${{ steps.increment_tag_version.outputs.next_version }}"
-          echo "Next Tag: $next_tag"
-
+          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
+          git tag $NEXT_TAG
+          git push origin $NEXT_TAG
