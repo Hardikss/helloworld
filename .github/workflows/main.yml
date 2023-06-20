@@ -1,48 +1,54 @@
-name: Create Tag and Release
+name: Create GitHub Release
 
 on:
   push:
     branches:
       - master
 
-
 jobs:
-    release-project:
-       name: Node-app relese
-       runs-on: ubuntu-latest
-       steps: 
-       
-       - name: Checkout repository
-         uses: actions/checkout@v2
+  release:
+    runs-on: ubuntu-latest
 
-       - name: Tag
-         id: tag_version
-         uses: mathieudutour/github-tag-action@v6.0
-         with:
-           github_token: ${{ secrets.GH_TOKEN }}       
-       - name: Create GitHub Release
-         id: create_release
-         uses: ncipollo/release-action@v1
-         with:
-           tag: ${{ steps.tag_version.outputs.new_tag }}
-           name: Release ${{ steps.tag_version.outputs.new_tag }}
-           body: ${{ steps.tag_version.outputs.changelog }}
- 
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-       
-       
-       - name: Download artifact from build job
-         uses: actions/download-artifact@v2
-         with:
-          name: node-app
- 
-       - name: Upload Release Asset
-         id: upload-release-asset 
-         uses: actions/upload-release-asset@v1
-         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-         with:
-           upload_url: ${{ steps.master.outputs.upload_url }} 
-           asset_path: ${{ github.workspace }}/release.zip
-           asset_name: ${{ steps.tag_version.outputs.new_tag }}.zip
-           asset_content_type: application/zip
+      - name: Set up Git
+        run: |
+          git config user.name "Hardi Sharma"
+          git config user.email "hardik.sharma@successive.tech"
+
+      - name: Get latest tag (if available)
+        id: get_latest_tag
+        run: |
+          LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
+          echo "::set-output name=latest_tag::$LATEST_TAG"
+
+      - name: Determine next tag
+        id: increment_tag
+        run: |
+          LATEST_TAG=${{ steps.get_latest_tag.outputs.latest_tag }}
+          if [[ -z "$LATEST_TAG" ]]; then
+            NEXT_TAG="v1.0.0"
+          else
+            IFS='.' read -r -a VERSION <<< "$LATEST_TAG"
+            MAJOR=${VERSION[0]}
+            MINOR=${VERSION[1]}
+            PATCH=${VERSION[2]}
+            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
+          fi
+          echo "::set-output name=next_tag::$NEXT_TAG"
+
+      - name: Create and push tag
+        id: create_tag
+        run: |
+          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
+          git tag $NEXT_TAG
+          git push origin $NEXT_TAG
+
+      - name: Create GitHub Release
+        run: |
+          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
+          API_URL="https://api.github.com/repos/${{ github.repository }}/releases"
+          BODY="{\"tag_name\": \"$NEXT_TAG\", \"name\": \"Release $NEXT_TAG\", \"body\": \"Add release notes here\", \"draft\": false, \"prerelease\": false}"
+          curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d "$BODY" "$API_URL"
