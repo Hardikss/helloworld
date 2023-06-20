@@ -39,6 +39,7 @@ jobs:
           fi
           echo "::set-output name=next_tag::$NEXT_TAG"
 
+
       - name: Create and push tag
         id: create_tag
         run: |
