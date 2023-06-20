@@ -1,4 +1,4 @@
-name: Create GitHub Release
+name: Determine Next Tag
 
 on:
   push:
@@ -6,50 +6,34 @@ on:
       - master
 
 jobs:
-  release:
+  determine_tag:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Git
-        run: |
-          git config user.name "Hardi Sharma"
-          git config user.email "hardik.sharma@successive.tech"
-
-      - name: Get latest tag (if available)
+      - name: Get latest tag
         id: get_latest_tag
         run: |
-          LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
-          echo "::set-output name=latest_tag::$LATEST_TAG"
+          git fetch --tags
+          latest_tag=$(git tag --sort=-version:refname | head -n 1)
+          echo "::set-output name=latest_tag::$latest_tag"
 
-      - name: Determine next tag
-        id: increment_tag
+      - name: Extract tag version
+        id: extract_tag_version
         run: |
-          LATEST_TAG=${{ steps.get_latest_tag.outputs.latest_tag }}
-          if [[ -z "$LATEST_TAG" ]]; then
-            NEXT_TAG="v1.0.0"
-          else
-            IFS='.' read -r -a VERSION <<< "$LATEST_TAG"
-            MAJOR=${VERSION[0]}
-            MINOR=${VERSION[1]}
-            PATCH=${VERSION[2]}
-            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
-          fi
-          echo "::set-output name=next_tag::$NEXT_TAG"
+          version=$(echo "${{ steps.get_latest_tag.outputs.latest_tag }}" | sed -E 's/^v([0-9.]+).*$/\1/')
+          echo "::set-output name=version::$version"
 
-
-      - name: Create and push tag
-        id: create_tag
+      - name: Increment tag version
+        id: increment_tag_version
         run: |
-          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
-          git tag $NEXT_TAG
-          git push origin $NEXT_TAG
+          version="${{ steps.extract_tag_version.outputs.version }}"
+          next_version=$(echo "$version + 0.1" | bc)
+          echo "::set-output name=next_version::$next_version"
 
-      - name: Create GitHub Release
+      - name: Use next tag
         run: |
-          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
-          API_URL="https://api.github.com/repos/${{ github.repository }}/releases"
-          BODY="{\"tag_name\": \"$NEXT_TAG\", \"name\": \"Release $NEXT_TAG\", \"body\": \"Add release notes here\", \"draft\": false, \"prerelease\": false}"
-          curl -s -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -d "$BODY" "$API_URL"
+          next_tag="${{ steps.increment_tag_version.outputs.next_version }}"
+          echo "Next Tag: $next_tag"
+
