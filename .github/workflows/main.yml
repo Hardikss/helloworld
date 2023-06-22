@@ -1,48 +1,21 @@
-name: Auto Increment Tag
-
+name: Bump version
 on:
   push:
     branches:
       - master
-
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Set up Git
-        run: |
-          git config user.name "Your Name"
-          git config user.email "your.email@example.com"
-
-      - name: Get latest tag (if available)
-        id: get_latest_tag
-        run: |
-          LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "")
-          echo "::set-output name=latest_tag::$LATEST_TAG"
-
-      - name: Determine next tag
-        id: increment_tag
-        run: |
-          LATEST_TAG=${{ steps.get_latest_tag.outputs.latest_tag }}
-          if [[ -z "$LATEST_TAG" ]]; then
-            NEXT_TAG="v1.0.0"
-          else
-            IFS='.' read -r -a VERSION <<< "$LATEST_TAG"
-            MAJOR=${VERSION[0]}
-            MINOR=${VERSION[1]}
-            PATCH=${VERSION[2]}
-            NEXT_TAG="$MAJOR.$MINOR.$((PATCH + 1))"
-          fi
-          echo "::set-output name=next_tag::$NEXT_TAG"
-
-
-      - name: Create and push tag
-        id: create_tag
-        run: |
-          NEXT_TAG=${{ steps.increment_tag.outputs.next_tag }}
-          git tag $NEXT_TAG
-          git push origin $NEXT_TAG
+      - uses: actions/checkout@v2
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create a GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
