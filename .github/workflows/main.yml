@@ -4,21 +4,96 @@ on:
   push:
     branches:
       - master
-
 jobs:
   build:
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.sha }} # required for better experience using pre-releases
-        fetch-depth: '0'
+    runs-on: ubuntu-latest
 
-    - name: Bump version and push tag
-      uses: anothrNick/github-tag-action@1.64.0 # Don't use @master or @v1 unless you're happy to test the latest version
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # if you don't want to set write permissions use a PAT token
-        WITH_V: true
-        PRERELEASE: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      # Perform build and test steps
+      
+      - name: Cleanup
+        run: |
+          # Add cleanup commands here
+          # For example, delete temporary files or directories
+          rm -rf temp/
+          rm -f *.log
+In this example:
+
+The workflow is triggered on every push to the main branch.
+The build job runs on the latest version of Ubuntu.
+The steps include checking out the repository, performing build and test steps (which can be customized), and finally the cleanup step.
+Under the "Cleanup" step, you can add specific cleanup commands using the run key. The example shows removing a temp/ directory and deleting .log files using the rm command. You can customize these commands based on your cleanup requirements.
+You can include any necessary cleanup commands in the run block, such as deleting temporary files, cleaning up dependencies, or performing other cleanup actions specific to your project.
+
+Save the file with an appropriate name (e.g., workflow.yml) in the .github/workflows directory of your repository. The cleanup step will be executed after the build and test steps, allowing you to clean up any temporary or unwanted artifacts created during the workflow.
+
+Please note that the cleanup step will only run if the preceding steps in the job are successful. If any preceding step fails, the cleanup step will be skipped.
+
+
+
+
+
+User
+delete-workflow-runs in github action
+ChatGPT
+To delete workflow runs in GitHub Actions, you can use the GitHub REST API in combination with a GitHub Actions workflow. Here's an example of how to delete workflow runs using a GitHub Actions workflow:
+
+yaml
+Copy code
+name: Delete Workflow Runs
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Run daily at midnight
+
+jobs:
+  delete-runs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Delete Workflow Runs
+        uses: actions/github-script@v5
+        with:
+          script: |
+            const { Octokit } = require("@octokit/rest");
+            
+            const octokit = new Octokit({
+              auth: process.env.GITHUB_TOKEN
+            });
+            
+            async function deleteWorkflowRuns() {
+              const owner = "your-username";
+              const repo = "your-repository";
+              const workflowId = "your-workflow-id";
+              const daysToKeep = 7; // Number of days to keep workflow runs
+            
+              const { data: runs } = await octokit.rest.actions.listWorkflowRuns({
+                owner,
+                repo,
+                workflow_id: workflowId,
+                status: "completed",
+                per_page: 100
+              });
+            
+              const cutoffDate = new Date();
+              cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+            
+              for (const run of runs) {
+                const runDate = new Date(run.updated_at);
+            
+                if (runDate < cutoffDate) {
+                  await octokit.rest.actions.deleteWorkflowRun({
+                    owner,
+                    repo,
+                    run_id: run.id
+                  });
+                  
+                  console.log(`Deleted workflow run ${run.id}`);
+                }
+              }
+            }
+            
+            deleteWorkflowRuns();
